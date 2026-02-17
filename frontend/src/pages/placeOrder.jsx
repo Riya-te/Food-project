@@ -79,7 +79,12 @@ const PlaceOrder = () => {
       const res = await axios.post("/api/order", payload);
       toast.success("Order placed successfully");
       dispatch(clearCart());
-      navigate("/", { replace: true });
+      const orderId = res.data?.order?._id;
+      if (orderId) {
+        navigate(`/order/${orderId}`);
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (err) {
       console.error(err);
       toast.error(err?.response?.data?.message || "Failed to place order");

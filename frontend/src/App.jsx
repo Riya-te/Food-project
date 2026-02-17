@@ -11,6 +11,8 @@ import EditItem from "./pages/EditItem";
 import CartPage from "./pages/CartPage";
 import Checkout from "./pages/CheckOut"; // ✅ fixed name
 import PlaceOrder from "./pages/placeOrder";
+import Orders from "./pages/Orders";
+import OrderDetails from "./pages/OrderDetails";
 
 import useGetCurrentUser from "./hooks/useGetCurrentUser";
 import useGetCity from "./hooks/useGetCity";
@@ -69,6 +71,16 @@ const App = () => {
       <Route
         path="/place-order"
         element={userData ? <PlaceOrder /> : <Navigate to="/signin" replace />}
+      />
+
+      <Route
+        path="/orders"
+        element={userData ? <Orders /> : <Navigate to="/signin" replace />}
+      />
+
+      <Route
+        path="/order/:orderId"
+        element={userData ? <OrderDetails /> : <Navigate to="/signin" replace />}
       />
 
       {/* HOME */}

@@ -45,7 +45,7 @@ const orderSchema =new mongoose.Schema({
         type:Number,
 
     },
-    shopOrder:[shopOrderSchema]
+    shopOrder:[ShopOrderSchema]
 
 },{timeStamps:true})
 

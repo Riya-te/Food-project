@@ -10,17 +10,19 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { clearCart } from "../redux/userSlice";
-import { setLocation } from "../redux/mapSlice";
+import { setLocation, updateAddress } from "../redux/mapSlice";
 
 import {
   MapContainer,
   TileLayer,
   Marker,
   useMapEvents,
+  useMap,
 } from "react-leaflet";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
-/* ================= FIX LEAFLET ICON ISSUE ================= */
+/* ================= FIX LEAFLET DEFAULT ICON ================= */
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -43,13 +45,13 @@ const Checkout = () => {
   const cartItems = useSelector((state) => state.user.cartItems || []);
   const savedLocation = useSelector((state) => state.map);
 
-  const [address, setAddress] = useState(savedLocation.address || "");
+  const [address, setAddress] = useState(savedLocation?.address || "");
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [loadingLocation, setLoadingLocation] = useState(false);
 
   const [coords, setCoords] = useState({
-    lat: savedLocation.lat || 20.5937,
-    lon: savedLocation.lng || 78.9629,
+    lat: savedLocation?.lat || 20.5937,
+    lng: savedLocation?.lng || 78.9629,
   });
 
   /* ================= REDIRECT IF CART EMPTY ================= */
@@ -66,43 +68,94 @@ const Checkout = () => {
   );
 
   const taxAmount = Math.round((subtotal * TAX_PERCENT) / 100);
-  const isFreeDelivery = subtotal >= FREE_DELIVERY_LIMIT;
-  const deliveryFee = isFreeDelivery ? 0 : DELIVERY_FEE;
+  const deliveryFee =
+    subtotal >= FREE_DELIVERY_LIMIT ? 0 : DELIVERY_FEE;
   const totalPayable = subtotal + taxAmount + deliveryFee;
 
-  /* ================= MAP CLICK HANDLER ================= */
+  /* ================= REVERSE GEOCODE ================= */
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      );
+      const data = await res.json();
+      const detectedAddress = data.display_name || "";
+
+      setAddress(detectedAddress);
+
+      dispatch(
+        setLocation({
+          lat,
+          lng,
+          address: detectedAddress,
+        })
+      );
+    } catch {
+      toast.error("Failed to fetch address");
+    }
+  };
+
+  /* ================= CLICK TO SELECT LOCATION ================= */
   const LocationMarker = () => {
     useMapEvents({
-      async click(e) {
+      click(e) {
         const { lat, lng } = e.latlng;
-
-        setCoords({ lat, lon: lng });
-
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-          );
-          const data = await res.json();
-
-          const detectedAddress = data.display_name || "";
-
-          setAddress(detectedAddress);
-
-          dispatch(
-            setLocation({
-              lat,
-              lng,
-              address: detectedAddress,
-            })
-          );
-
-          toast.success("Location selected 📍");
-        } catch {
-          toast.error("Failed to fetch address");
-        }
+        setCoords({ lat, lng });
+        reverseGeocode(lat, lng);
+        toast.success("Location selected 📍");
       },
     });
+    return null;
+  };
 
+  /* ================= DRAG MARKER ================= */
+  const DraggableMarker = () => {
+    const eventHandlers = {
+      dragend(e) {
+        const marker = e.target;
+        const position = marker.getLatLng();
+        setCoords({
+          lat: position.lat,
+          lng: position.lng,
+        });
+        reverseGeocode(position.lat, position.lng);
+        toast.success("Marker moved 📍");
+      },
+    };
+
+    return (
+      <Marker
+        position={[coords.lat, coords.lng]}
+        draggable={true}
+        eventHandlers={eventHandlers}
+      />
+    );
+  };
+
+  /* ================= FORCE MAP RESIZE ================= */
+  const FixMapSize = () => {
+    const map = useMap();
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        map.invalidateSize();
+      }, 300);
+      return () => clearTimeout(timer);
+    }, [map]);
+    
+    useEffect(() => {
+      window.addEventListener("resize", () => map.invalidateSize());
+      return () => window.removeEventListener("resize", () => map.invalidateSize());
+    }, [map]);
+    
+    return null;
+  };
+
+  /* ================= RECENTER MAP ================= */
+  const RecenterMap = ({ lat, lng }) => {
+    const map = useMap();
+    useEffect(() => {
+      map.setView([lat, lng]);
+    }, [lat, lng, map]);
     return null;
   };
 
@@ -116,35 +169,12 @@ const Checkout = () => {
     setLoadingLocation(true);
 
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+      (pos) => {
         const { latitude, longitude } = pos.coords;
-
-        setCoords({ lat: latitude, lon: longitude });
-
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-          );
-          const data = await res.json();
-
-          const detectedAddress = data.display_name || "";
-
-          setAddress(detectedAddress);
-
-          dispatch(
-            setLocation({
-              lat: latitude,
-              lng: longitude,
-              address: detectedAddress,
-            })
-          );
-
-          toast.success("Location detected 📍");
-        } catch {
-          toast.error("Failed to fetch address");
-        } finally {
-          setLoadingLocation(false);
-        }
+        setCoords({ lat: latitude, lng: longitude });
+        reverseGeocode(latitude, longitude);
+        toast.success("Location detected 📍");
+        setLoadingLocation(false);
       },
       () => {
         toast.error("Location permission denied");
@@ -160,17 +190,18 @@ const Checkout = () => {
       return;
     }
 
-    toast.success("Order placed successfully 🎉");
+    // Persist the typed address to the map slice so place-order page can read it
+    dispatch(updateAddress(address));
 
-    dispatch(clearCart());
-    navigate("/", { replace: true });
+    // Navigate to place-order confirmation page where order will be sent to backend
+    navigate("/place-order", { state: { paymentMethod } });
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 px-4 py-6">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* LEFT */}
+        {/* LEFT SECTION */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center gap-3">
             <button
@@ -184,7 +215,7 @@ const Checkout = () => {
             </h1>
           </div>
 
-          {/* ADDRESS SECTION */}
+          {/* ADDRESS */}
           <div className="bg-white rounded-2xl p-6 shadow-lg">
             <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
               <MapPin className="text-orange-500" />
@@ -209,17 +240,21 @@ const Checkout = () => {
             </div>
 
             {/* MAP */}
-            <div className="mt-3 h-64 rounded-xl overflow-hidden border">
+            <div className="rounded-xl overflow-hidden border mt-4">
               <MapContainer
-                center={[coords.lat, coords.lon]}
+                center={[coords.lat, coords.lng]}
                 zoom={15}
-                style={{ height: "100%", width: "100%" }}
+                style={{ height: "400px", width: "100%" }}
+                key={`${coords.lat}-${coords.lng}`}
               >
                 <TileLayer
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 />
-                <Marker position={[coords.lat, coords.lon]} />
+                <DraggableMarker />
                 <LocationMarker />
+                <RecenterMap lat={coords.lat} lng={coords.lng} />
+                <FixMapSize />
               </MapContainer>
             </div>
           </div>
@@ -258,7 +293,7 @@ const Checkout = () => {
           </div>
         </div>
 
-        {/* RIGHT */}
+        {/* RIGHT SECTION */}
         <div className="bg-white rounded-2xl p-6 shadow-xl h-fit sticky top-24">
           <h2 className="text-lg font-bold mb-4">
             Order Summary
@@ -268,17 +303,38 @@ const Checkout = () => {
             {cartItems.map((item) => (
               <div key={item.id} className="flex justify-between">
                 <span>{item.name} × {item.quantity}</span>
-                <span>₹{item.price * item.quantity}</span>
+                <span>
+                  ₹{item.price * item.quantity}
+                </span>
               </div>
             ))}
 
             <hr />
 
             <div className="flex justify-between">
-              <span>Total</span>
-              <span className="font-bold text-orange-600">
-                ₹{totalPayable}
+              <span>Subtotal</span>
+              <span>₹{subtotal}</span>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Tax ({TAX_PERCENT}%)</span>
+              <span>₹{taxAmount}</span>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Delivery Fee</span>
+              <span>
+                {deliveryFee === 0
+                  ? "FREE"
+                  : `₹${deliveryFee}`}
               </span>
+            </div>
+
+            <hr />
+
+            <div className="flex justify-between font-bold text-orange-600">
+              <span>Total Payable</span>
+              <span>₹{totalPayable}</span>
             </div>
           </div>
 

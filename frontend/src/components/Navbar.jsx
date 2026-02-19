@@ -15,6 +15,7 @@ import {
 
 import { serverUrl } from "../App";
 import { clearUser } from "../redux/userSlice";
+import { clearOwnerState } from "../redux/ownerSlice";
 
 const Navbar = () => {
   const { userData, city } = useSelector((state) => state.user);
@@ -101,6 +102,7 @@ const cartItems = useSelector((state) => state.user.cartItems || []);
     try {
       await axiosInstance.post("/api/auth/signout", {});
       dispatch(clearUser());
+      dispatch(clearOwnerState()); // 🔥 Clear owner state on logout
       toast.success("Logged out 👋");
       navigate("/signin", { replace: true });
     } catch {
@@ -139,7 +141,53 @@ const cartItems = useSelector((state) => state.user.cartItems || []);
         </div>
 
         {/* RIGHT (DESKTOP) */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-3">
+          {/* CONTACT (ALL USERS) */}
+          <button
+            onClick={() => navigate("/contact")}
+            className="flex items-center gap-1 px-4 py-2 rounded-full
+                       bg-cyan-100 text-cyan-700 hover:bg-cyan-200
+                       font-semibold transition text-sm"
+          >
+            📞 Contact
+          </button>
+
+          {/* ABOUT US (ALL USERS) */}
+          <button
+            onClick={() => navigate("/about-us")}
+            className="flex items-center gap-1 px-4 py-2 rounded-full
+                       bg-purple-100 text-purple-700 hover:bg-purple-200
+                       font-semibold transition text-sm"
+          >
+            ℹ️ About
+          </button>
+
+          {/* MENU (USER ONLY) */}
+          {isUser && (
+            <button
+              onClick={() => navigate("/menu")}
+              className="flex items-center gap-1 px-4 py-2 rounded-full
+                         bg-amber-100 text-amber-700 hover:bg-amber-200
+                         font-semibold transition"
+            >
+              <Menu size={18} />
+              Menu
+            </button>
+          )}
+
+          {/* ORDERS (USER ONLY) */}
+          {isUser && (
+            <button
+              onClick={() => navigate("/orders")}
+              className="flex items-center gap-1 px-4 py-2 rounded-full
+                         bg-blue-100 text-blue-700 hover:bg-blue-200
+                         font-semibold transition"
+            >
+              📦
+              Orders
+            </button>
+          )}
+
           {/* SEARCH (USER ONLY) */}
           {isUser && (
             <div
@@ -191,7 +239,7 @@ const cartItems = useSelector((state) => state.user.cartItems || []);
           {/* LOGOUT */}
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-amber-500 text-white rounded-full"
+            className="px-4 py-2 bg-amber-500 text-white rounded-full text-sm font-semibold"
           >
             Logout
           </button>
@@ -208,19 +256,71 @@ const cartItems = useSelector((state) => state.user.cartItems || []);
 
       {/* MOBILE MENU */}
       {mobileOpen && (
-        <div className="md:hidden bg-white shadow-lg px-4 py-4 space-y-4">
+        <div className="md:hidden bg-white shadow-lg px-4 py-4 space-y-3">
+          {/* CONTACT */}
+          <button
+            onClick={() => {
+              navigate("/contact");
+              setMobileOpen(false);
+            }}
+            className="mobile-item text-cyan-600"
+          >
+            📞 Contact Us
+          </button>
+
+          {/* ABOUT */}
+          <button
+            onClick={() => {
+              navigate("/about-us");
+              setMobileOpen(false);
+            }}
+            className="mobile-item text-purple-600"
+          >
+            ℹ️ About Us
+          </button>
+
           {isUser && (
             <button
-              onClick={() => navigate("/cart")}
-              className="mobile-item"
+              onClick={() => {
+                navigate("/menu");
+                setMobileOpen(false);
+              }}
+              className="mobile-item text-amber-600"
             >
-              <ShoppingCart /> Cart ({cartItems.length})
+              📋 Menu
+            </button>
+          )}
+
+          {isUser && (
+            <button
+              onClick={() => {
+                navigate("/orders");
+                setMobileOpen(false);
+              }}
+              className="mobile-item text-blue-600"
+            >
+              📦 Orders
+            </button>
+          )}
+
+          {isUser && (
+            <button
+              onClick={() => {
+                navigate("/cart");
+                setMobileOpen(false);
+              }}
+              className="mobile-item text-green-600"
+            >
+              🛒 Cart ({cartItems.length})
             </button>
           )}
 
           {isOwner && hasShop && (
             <button
-              onClick={() => navigate("/owner/add-item")}
+              onClick={() => {
+                navigate("/add-item");
+                setMobileOpen(false);
+              }}
               className="mobile-item text-green-600"
             >
               <Plus /> Add Item

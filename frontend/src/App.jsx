@@ -5,6 +5,12 @@ import Signup from "./pages/Signup";
 import Signin from "./pages/Signin";
 import ForgetPassword from "./pages/ForgetPassword";
 import Home from "./pages/Home";
+import Menu from "./pages/Menu";
+import HowWeWork from "./pages/HowWeWork";
+import Contact from "./pages/Contact";
+import CallSupport from "./pages/CallSupport";
+import AboutUs from "./pages/AboutUs";
+import Offers from "./pages/Offers";
 import CreateEditShop from "./pages/CreateEditShop";
 import AddItem from "./pages/AddItem";
 import EditItem from "./pages/EditItem";
@@ -87,6 +93,42 @@ const App = () => {
       <Route
         path="/"
         element={userData ? <Home /> : <Navigate to="/signin" replace />}
+      />
+
+      {/* MENU */}
+      <Route
+        path="/menu"
+        element={userData ? <Menu /> : <Navigate to="/signin" replace />}
+      />
+
+      {/* HOW WE WORK */}
+      <Route
+        path="/howwework"
+        element={userData ? <HowWeWork /> : <Navigate to="/signin" replace />}
+      />
+
+      {/* CONTACT */}
+      <Route
+        path="/contact"
+        element={userData ? <Contact /> : <Navigate to="/signin" replace />}
+      />
+
+      {/* CALL SUPPORT */}
+      <Route
+        path="/call-support"
+        element={userData ? <CallSupport /> : <Navigate to="/signin" replace />}
+      />
+
+      {/* ABOUT US */}
+      <Route
+        path="/about-us"
+        element={userData ? <AboutUs /> : <Navigate to="/signin" replace />}
+      />
+
+      {/* OFFERS */}
+      <Route
+        path="/offers"
+        element={userData ? <Offers /> : <Navigate to="/signin" replace />}
       />
 
       {/* OWNER ROUTES */}

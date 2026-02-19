@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { clearUser } from "../redux/userSlice";
+import { clearOwnerState } from "../redux/ownerSlice";
 import { serverUrl } from "../App";
 
 const NavbarOwner = () => {
@@ -45,6 +46,7 @@ const NavbarOwner = () => {
       { withCredentials: true }
     );
     dispatch(clearUser());
+    dispatch(clearOwnerState()); // 🔥 Clear owner state on logout
     navigate("/signin", { replace: true });
   };
 

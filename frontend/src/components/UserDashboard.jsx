@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 import Navbar from "./Navbar";
 import UserHero from "./UserHero";
@@ -11,6 +12,7 @@ import useGetShopByState from "../hooks/useGetShopByState";
 import { categories } from "../category";
 
 import { addToCart } from "../redux/userSlice";
+import Footer from "./Footer";
 
 /* ================= PREMIUM RATING HELPERS ================= */
 
@@ -51,6 +53,7 @@ const SWIPE_THRESHOLD = 90;
 
 const UserDashboard = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const autoplayRef = useRef(null);
 
   /* ================= DATA ================= */
@@ -139,6 +142,19 @@ const UserDashboard = () => {
               image={cat.image}
             />
           ))}
+        </div>
+
+        {/* VIEW ALL MENU BUTTON */}
+        <div className="text-center mt-8">
+          <button
+            onClick={() => navigate("/menu")}
+            className="px-8 py-3 rounded-full
+                       bg-gradient-to-r from-orange-500 to-amber-500
+                       text-white font-bold shadow-lg
+                       hover:shadow-xl active:scale-95 transition"
+          >
+            View Complete Menu →
+          </button>
         </div>
       </div>
 
@@ -259,6 +275,120 @@ const UserDashboard = () => {
           })}
         </motion.div>
       </div>
+
+      {/* ================= HOW WE WORK PREVIEW SECTION ================= */}
+      <section className="relative py-20 bg-gradient-to-br from-cyan-100 via-blue-100 to-teal-100 overflow-hidden">
+        
+        {/* Decorative elements */}
+        <motion.div
+          className="absolute top-10 left-5 text-6xl opacity-20"
+          animate={{ y: [0, -20, 0] }}
+          transition={{ repeat: Infinity, duration: 6 }}
+        >
+          🍕
+        </motion.div>
+        <motion.div
+          className="absolute bottom-10 right-5 text-6xl opacity-20"
+          animate={{ y: [0, 20, 0] }}
+          transition={{ repeat: Infinity, duration: 7 }}
+        >
+          🍔
+        </motion.div>
+
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: -30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+              How SwadWala Works
+            </h2>
+            <p className="text-xl text-gray-700 max-w-2xl mx-auto mb-8">
+              From discovering your favorite local restaurants to savoring delicious meals at your doorstep - we make food delivery simple, fast, and delightful.
+            </p>
+          </motion.div>
+
+          {/* 6 STEPS PREVIEW */}
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            {[
+              { icon: "🔍", title: "Find Store", desc: "Discover restaurants near you" },
+              { icon: "📋", title: "Browse Menu", desc: "Explore delicious dishes" },
+              { icon: "🛒", title: "Add to Cart", desc: "Select & customize orders" },
+              { icon: "💳", title: "Checkout", desc: "Secure payment options" },
+              { icon: "✅", title: "Confirmed", desc: "Get instant confirmation" },
+              { icon: "🚚", title: "Delivered", desc: "Hot & fresh at your door" },
+            ].map((step, index) => (
+              <motion.div
+                key={index}
+                className="bg-white/80 backdrop-blur-md rounded-2xl p-6 border-2 border-white/40 hover:border-orange-400/50 transition"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="text-4xl mb-3">{step.icon}</div>
+                <h3 className="text-lg font-bold mb-2 text-gray-900">{step.title}</h3>
+                <p className="text-gray-700 text-sm">{step.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* CTA BUTTON */}
+          <div className="text-center">
+            <motion.button
+              onClick={() => navigate("/howwework")}
+              className="px-10 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white text-lg font-bold rounded-full hover:shadow-2xl transition inline-block"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Learn More →
+            </motion.button>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= EXCLUSIVE DEALS SECTION ================= */}
+      <section className="relative py-20 px-6 bg-gradient-to-r from-emerald-300 via-cyan-300 to-blue-300 overflow-hidden">
+        <motion.div
+          className="absolute top-10 right-10 text-7xl opacity-20"
+          animate={{ rotate: [0, 10, 0], scale: [1, 1.1, 1] }}
+          transition={{ repeat: Infinity, duration: 4 }}
+        >
+          🎉
+        </motion.div>
+
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: -30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Get Exclusive Deals & Offers
+            </h2>
+            <p className="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">
+              Discover amazing discounts and special offers on your favorite meals!
+              Use coupon codes to save more on every order.
+            </p>
+
+            <motion.button
+              onClick={() => navigate("/offers")}
+              className="px-12 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-lg rounded-full hover:shadow-2xl transition inline-block"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              View All Offers 🎁
+            </motion.button>
+          </motion.div>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 };

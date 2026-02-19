@@ -24,6 +24,7 @@ const useGetMyShop = () => {
       } catch (err) {
         if (err.response?.status === 404) {
           dispatch(clearShop());
+          dispatch(setItems([])); // 🔥 Clear items when owner has no shop
         }
       }
     };

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import gsap from "gsap";
@@ -7,8 +7,6 @@ import { ImagePlus, Trash2, ArrowLeft } from "lucide-react";
 import axiosInstance from "../utils/axiosConfig";
 
 import Navbar from "../components/Navbar";
-import { serverUrl } from "../App";
-import { addItem } from "../redux/ownerSlice";
 
 const CATEGORIES = [
   "snacks",
@@ -26,7 +24,6 @@ const CATEGORIES = [
 
 const AddItem = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const { shop } = useSelector((state) => state.owner);
 
   /* ================= FORM STATE ================= */
@@ -42,6 +39,7 @@ const AddItem = () => {
   const [image, setImage] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
   const [preview, setPreview] = useState(null);
+  const [imageHeight, setImageHeight] = useState(176); // h-44 = 176px
 
   const [loading, setLoading] = useState(false);
   const cardRef = useRef(null);
@@ -108,7 +106,7 @@ const handleSubmit = async (e) => {
       data
     );
 
-    dispatch(addItem(res.data.item));
+    // ✅ Don't dispatch addItem to avoid duplicates - let useGetMyShop fetch fresh items
     toast.success("Food item added successfully!");
     navigate("/", { replace: true });
   } catch (err) {
@@ -178,10 +176,39 @@ const handleSubmit = async (e) => {
           <div>
             <label className="font-semibold">Image</label>
 
+            {/* 🔧 IMAGE SIZE CONTROLS */}
+            {preview && (
+              <div className="mt-2 flex items-center gap-2 p-2 bg-gray-100 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setImageHeight(Math.max(120, imageHeight - 20))}
+                  className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400"
+                >
+                  −
+                </button>
+                <span className="text-sm font-medium min-w-16 text-center">
+                  {imageHeight}px
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setImageHeight(Math.min(400, imageHeight + 20))}
+                  className="px-3 py-1 bg-gray-300 text-sm rounded hover:bg-gray-400"
+                >
+                  +
+                </button>
+                <span className="text-xs text-gray-600 ml-auto">
+                  (120px - 400px)
+                </span>
+              </div>
+            )}
+
             {imageMode === "file" && (
-              <div className="mt-2 relative w-full h-44 rounded-xl border
+              <div
+                className="mt-2 relative w-full rounded-xl border
                               border-dashed flex items-center justify-center
-                              bg-gray-50 overflow-hidden">
+                              bg-gray-50 overflow-hidden"
+                style={{ height: `${imageHeight}px` }}
+              >
                 {preview ? (
                   <>
                     <img src={preview} className="w-full h-full object-cover" />
@@ -222,7 +249,10 @@ const handleSubmit = async (e) => {
                   className="input"
                 />
                 {preview && (
-                  <div className="w-full h-44 rounded-xl overflow-hidden border">
+                  <div
+                    className="w-full rounded-xl overflow-hidden border"
+                    style={{ height: `${imageHeight}px` }}
+                  >
                     <img
                       src={preview}
                       className="w-full h-full object-cover"
